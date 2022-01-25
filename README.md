@@ -20,3 +20,6 @@ A simple python script to be used as a log pipe. From your services to a externa
 - Async support. So far everything is synchronous.
 - Rate limit: bursts of lines can trigger ratelimit limitations of the services.
 - Each line turns into a request to a external service: no batching mechanism yet.
+
+## Dependencies
+- This program uses only Python 3.x and it's standard library and was tested on Python 3.9.9.
