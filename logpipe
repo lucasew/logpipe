@@ -1,0 +1,150 @@
+#!/usr/bin/env python3
+
+import argparse
+from pathlib import Path
+import subprocess
+from sys import argv, stdout
+from os import environ
+from json import loads as json_decode, dumps as json_encode, dump
+from datetime import datetime, timezone
+from time import sleep
+import configparser
+
+parser = argparse.ArgumentParser(description = "Send lines from different sources to remote sinks")
+parser.add_argument("-c,--config", dest='config', help="Configuration file", type=Path)
+args = parser.parse_args()
+
+config = configparser.ConfigParser()
+if args.config is not None:
+    config.read(args.config)
+
+
+class Source:
+    name = "DEFAULT"
+    format_string = ""
+    def __init__(self):
+        pass
+    def __next__(self):
+        raise NotImplementedError()
+    def format(self, payload):
+        return self.format_string.format(**payload)
+
+class JournalctlSource(Source):
+    name = "journalctl"
+    format_string = "#{_HOSTNAME} {__REALTIME_TIMESTAMP} ({_SYSTEMD_CGROUP}): {MESSAGE}"
+    process = None
+    def __next__(self):
+        if self.process is None:
+            args = ["journalctl", "--no-pager", "--output=json", "-f", "--utc"]
+            self.process = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        out = self.process.stdout.readline()
+        if len(out) == 0 and p.poll() != None:
+            return
+        if len(out) > 0:
+            decoded = json_decode(out)
+            return self.format(decoded)
+
+class Sink:
+    name = "DEFAULT"
+    def __init__(self):
+        pass
+    def handle_message(self, message):
+        raise NotImplementedError()
+
+class DiscordSink(Sink):
+    name = "discord"
+    def __init__(self, webhook = environ.get("DISCORD_WEBHOOK")):
+        if webhook is None:
+            raise TypeError("Discord webhook is not defined")
+        self.webhook = webhook
+    def handle_message(self, message):
+        sleep(0.1)
+        from urllib import parse, request
+        data = parse.urlencode(dict(content = content)).encode('utf-8')
+        req = request.Request(self.webhook, data = data, method = 'POST')
+        req.headers['User-Agent'] = 'curl/7.80.0'
+        res = request.urlopen(req)
+        ret = res.read()
+        if len(ret) > 0:
+            print(str(ret))
+
+class TelegramSink(Sink):
+    name = "telegram"
+    def __init__(self, token = environ.get("TELEGRAM_TOKEN"), chat_id = environ.get("TELEGRAM_CHAT")):
+        if token is None:
+            raise TypeError("Telegram token is not defined")
+        if chat_id is None:
+            raise TypeError("Telegram chat id is not defined")
+        self.token = token
+        self.chat_id = chat_id
+    def handle_message(self, text, **kwargs):
+        from urllib import request, parse
+        data = parse.urlencode(dict(chat_id = self.chat_id, text = text))
+        res = request.urlopen(f'https://api.telegram.org/bot{self.token}/sendMessage?{data}')
+        ret = res.read()
+        if len(ret) > 0:
+            print(str(ret))
+
+class ConsoleSink(Sink):
+    name = "console"
+    def __init__(self):
+        pass
+    def handle_message(self, text):
+        print(text)
+
+sources = {}
+sinks = {}
+
+def register_class(cls):
+    if issubclass(cls, Source):
+        sources[cls.name] = cls
+    if issubclass(cls, Sink):
+        sinks[cls.name] = cls
+
+register_class(JournalctlSource)
+register_class(DiscordSink)
+register_class(TelegramSink)
+register_class(ConsoleSink)
+
+used_sources = {}
+used_sinks = {}
+
+for section in config.sections():
+    if section.startswith("source."):
+        (_, name) = section.split(".")
+        kind = config[section].get('type') or ""
+        cls = sources.get(kind)
+        if cls is None:
+            raise Exception(f"The source type '{kind}' for key '{name}' isn't defined")
+        params = dict(config[section])
+        params.pop("type")
+        used_sources[name] = cls(**params)
+    if section.startswith("sink."):
+        (_, name) = section.split(".")
+        kind = config[section].get('type') or ""
+        cls = sinks.get(kind)
+        if cls is None:
+            raise Exception(f"The sink type '{kind}' for key '{name}' isn't defined")
+        params = dict(config[section])
+        params.pop("type")
+        used_sinks[name] = cls(**params)
+    if section == "env":
+        for k, v in dict(config['env']).items():
+            environ[k.upper()] = v
+
+if len(used_sources) == 0:
+    raise Exception("No sources were defined")
+if len(used_sinks) == 0:
+    raise Exception("No sinks were defined")
+
+def broadcast(message):
+    for used_sink in used_sinks.values():
+        used_sink.handle_message(message)
+
+broadcast(f"Started logpipe. Sources: {', '.join(used_sources.keys())} Sinks: {', '.join(used_sinks.keys())}")
+
+while True:
+    for source in used_sources.values():
+        line = next(source)
+        if line is not None:
+            broadcast(line)
