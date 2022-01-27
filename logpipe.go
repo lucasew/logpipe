@@ -46,6 +46,7 @@ func (l *LogPipe) broadcast(source string, message string) {
     defer l.RUnlock()
     for _, sink := range l.sinks {
         sink.GetSink()<-message
+        // log.Printf("broadcasting to '%s': %s", k, message)
     }
 }
 

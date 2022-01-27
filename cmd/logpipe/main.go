@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/lucasew/gocfg"
 	"github.com/lucasew/logpipe"
@@ -46,6 +47,7 @@ func init () {
                 log.Fatalf("error initializing source '%s' in section '%s': %s", name, k, err.Error())
             }
             lp.RegisterSource(name, source)
+            log.Printf("registering source '%s'", name)
             continue
         }
         if strings.HasPrefix(k, "sink.") {
@@ -67,6 +69,7 @@ func init () {
                 log.Fatalf("error initializing '%s' in sink '%s': %s", name, k, err.Error())
             }
             lp.RegisterSink(name, sink)
+            log.Printf("registering sink '%s'", name)
             continue
         }
         if k == "env" {
@@ -82,6 +85,8 @@ func init () {
 
 func main() {
     for {
-        lp.Tick()
+        if !lp.Tick() {
+            time.Sleep(500*time.Millisecond)
+        }
     }
 }
