@@ -18,17 +18,20 @@ type journalctlSource struct {
     template *template.Template
 }
 
-func NewJournalctlSource(cfg gocfg.Section) Source {
+func NewJournalctlSource(cfg gocfg.Section) (Source, error) {
     tmplStr, ok := cfg["format"]
     if !ok {
         tmplStr = "#{{._HOSTNAME}} {{.__REALTIME_TIMESTAMP}} ({{._SYSTEMD_CGROUP}}): {{.MESSAGE}}"
     }
-    tmpl := template.Must(template.New("msg").Parse(tmplStr))
+    tmpl, err := template.New("msg").Parse(tmplStr)
+    if err != nil {
+        return nil, err
+    }
     return &journalctlSource{
         ch: make(chan string, 10),
         cfg: cfg,
         template: tmpl,
-    }
+    }, nil
 }
 
 func (j *journalctlSource) GetSource() <-chan string {

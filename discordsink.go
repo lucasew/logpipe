@@ -2,6 +2,7 @@ package logpipe
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -19,8 +20,16 @@ type discordSink struct {
     started bool
 }
 
+var (
+    ErrDiscordSinkNoWebhookProvided = errors.New("no webhook was provided")
+)
+
 func NewDiscordSink(cfg gocfg.Section) (Sink, error) {
-    u, err := url.Parse(cfg["webhook"])
+    webhook, ok := cfg["webhook"]
+    if !ok {
+        return nil, ErrDiscordSinkNoWebhookProvided
+    }
+    u, err := url.Parse(webhook)
     if err != nil {
         return nil, err
     }
