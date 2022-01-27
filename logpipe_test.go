@@ -36,6 +36,12 @@ func (ts *LogPipeTestingSink) GetTextIdx(idx int) string {
     return ts.texts[idx]
 }
 
+func (ts *LogPipeTestingSink) GetTextSize() int {
+    ts.Lock()
+    defer ts.Unlock()
+    return len(ts.texts)
+}
+
 func (ts *LogPipeTestingSink) GetSink() chan<- string {
     if !ts.started {
         log.Printf("started sink")
