@@ -8,10 +8,6 @@ import (
 	"time"
 )
 
-func nop(_ ...interface {}) {
-    return
-}
-
 type LogPipeTestingSource chan string
 
 func NewLogPipeTestingSource() LogPipeTestingSource {

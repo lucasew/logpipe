@@ -4,6 +4,9 @@ import (
 	"sync"
 )
 
+func nop(_ ...interface {}) {
+}
+
 type Source interface {
     GetSource() <-chan string // Sources can only provide lines
 }
