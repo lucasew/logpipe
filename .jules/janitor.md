@@ -1,0 +1,1 @@
+- 2024-05-19: Always use `time.NewTicker` instead of `time.Tick` for non-endless loops to avoid leaking tickers, and ensure HTTP response bodies and files are explicitly closed with error checking.

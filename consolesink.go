@@ -7,28 +7,25 @@ import (
 )
 
 type ConsoleSink struct {
-    ch chan string
-    started bool
+	ch      chan string
+	started bool
 }
 
-func NewConsoleSink(cfg gocfg.Section) (Sink, error) {
-    return &ConsoleSink{
-        ch: make(chan string, 1),
-        started: false,
-    }, nil
+func NewConsoleSink(cfg gocfg.SectionProvider) (Sink, error) {
+	return &ConsoleSink{
+		ch:      make(chan string, 1),
+		started: false,
+	}, nil
 }
 
-func (t *ConsoleSink) GetSink() chan <- string {
-    if !t.started {
-        go func () {
-            for {
-                select {
-                case msg := <-t.ch:
-                    log.Printf("terminal: %s", msg)
-                }
-            }
-        }()
-        t.started = true
-    }
-    return t.ch
+func (t *ConsoleSink) GetSink() chan<- string {
+	if !t.started {
+		go func() {
+			for msg := range t.ch {
+				log.Printf("terminal: %s", msg)
+			}
+		}()
+		t.started = true
+	}
+	return t.ch
 }
