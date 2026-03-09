@@ -44,15 +44,14 @@ func (d *telegramSink) GetSink() chan<- string {
 				}
 				<-ticker.C
 				res, err := http.DefaultClient.Do(req)
-				if res != nil {
-					if err := res.Body.Close(); err != nil {
-						log.Printf("error closing response body: %s", err)
+				if err != nil {
+					log.Printf("retry: %s", err.Error())
+				} else if res != nil {
+					if closeErr := res.Body.Close(); closeErr != nil {
+						log.Printf("error closing response body: %s", closeErr)
 					}
 				}
 				// io.Copy(os.Stdout, res.Body)
-				if err != nil {
-					log.Printf("retry: %s", err.Error())
-				}
 			}
 		}()
 		d.started = true

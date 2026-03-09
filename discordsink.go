@@ -58,9 +58,9 @@ func (d *discordSink) GetSink() chan<- string {
 				res, err := http.DefaultClient.Do(req)
 				if err != nil {
 					log.Printf("error calling discord webhook: %s", err)
-				} else {
-					if err := res.Body.Close(); err != nil {
-						log.Printf("error closing response body: %s", err)
+				} else if res != nil {
+					if closeErr := res.Body.Close(); closeErr != nil {
+						log.Printf("error closing response body: %s", closeErr)
 					}
 				}
 				// io.Copy(os.Stdout, res.Body)
