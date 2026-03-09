@@ -37,6 +37,7 @@ jobs:
           commit-message: "chore: update generated code"
           branch: "chore/update-generated-code"
           delete-branch: true
+          base: ${{ github.head_ref || github.ref_name }}
 
       - name: Run CI
         run: mise run ci
