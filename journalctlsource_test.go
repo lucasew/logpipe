@@ -7,7 +7,10 @@ import (
 
 func TestJournalctlSource(t *testing.T) {
     sink := NewLogPipeTestingSink()
-    source := NewJournalctlSource(map[string]string{})
+    source, err := NewJournalctlSource(map[string]string{})
+    if err != nil {
+        t.Fatal(err)
+    }
     lp := NewLogPipe()
     lp.RegisterSource("journalctl", source)
     lp.RegisterSink("echo", sink)
