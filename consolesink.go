@@ -11,6 +11,9 @@ type ConsoleSink struct {
     started bool
 }
 
+// NewConsoleSink provides a simple sink that outputs messages to standard
+// logging output via an internal channel loop. It does not enforce
+// any specific rate limits.
 func NewConsoleSink(cfg gocfg.Section) (Sink, error) {
     return &ConsoleSink{
         ch: make(chan string, 1),

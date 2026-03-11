@@ -21,6 +21,11 @@ var (
     ErrDiscordSinkNoWebhookProvided = errors.New("no webhook was provided")
 )
 
+// NewDiscordSink initializes a sink that dispatches messages to a Discord channel
+// via an asynchronous goroutine using a webhook URL.
+// It requires the "webhook" configuration key to be present in the provided section.
+// Messages are dispatched with an internal 200ms rate-limit to avoid hitting
+// API limits.
 func NewDiscordSink(cfg gocfg.Section) (Sink, error) {
     webhook, ok := cfg["webhook"]
     if !ok {

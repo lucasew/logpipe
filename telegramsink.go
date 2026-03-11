@@ -17,6 +17,10 @@ type telegramSink struct {
     started bool
 }
 
+// NewTelegramSink initializes a sink that dispatches messages to a Telegram chat.
+// It requires both "chat_id" and "token" configuration keys. The sink operates
+// asynchronously, buffering messages up to a limit of 10 and processing them
+// with an internal 100ms rate-limit to avoid hitting the Telegram API limits.
 func NewTelegramSink(cfg gocfg.Section) (Sink, error) {
     return &telegramSink{
         cfg: cfg,
