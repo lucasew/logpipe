@@ -34,7 +34,7 @@ func init () {
                 log.Fatalf("invalid source definition in section '%s'", k)
             }
             name := parts[1]
-            sourceType, ok := v["type"]
+            sourceType, ok := v.RawGet("type"), v.RawHasKey("type")
             if !ok {
                 log.Fatalf("no source type was provided in section '%s'", k)
             }
@@ -56,7 +56,7 @@ func init () {
                 log.Fatalf("invalid sink definition in section '%s'", k)
             }
             name := parts[1]
-            sourceType, ok := v["type"]
+            sourceType, ok := v.RawGet("type"), v.RawHasKey("type")
             if !ok {
                 log.Fatalf("no source type was provided in section '%s'", k)
             }
@@ -73,7 +73,7 @@ func init () {
             continue
         }
         if k == "env" {
-            for vark, varv := range v {
+            for vark, varv := range v.(gocfg.MapSectionProvider) {
                 err := os.Setenv(vark, varv)
                 if err != nil {
                     panic(err)

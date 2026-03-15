@@ -11,7 +11,7 @@ type ConsoleSink struct {
     started bool
 }
 
-func NewConsoleSink(cfg gocfg.Section) (Sink, error) {
+func NewConsoleSink(cfg gocfg.SectionProvider) (Sink, error) {
     return &ConsoleSink{
         ch: make(chan string, 1),
         started: false,

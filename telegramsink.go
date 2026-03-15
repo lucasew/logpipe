@@ -12,12 +12,12 @@ import (
 )
 
 type telegramSink struct {
-    cfg gocfg.Section
+    cfg gocfg.SectionProvider
     ch chan string
     started bool
 }
 
-func NewTelegramSink(cfg gocfg.Section) (Sink, error) {
+func NewTelegramSink(cfg gocfg.SectionProvider) (Sink, error) {
     return &telegramSink{
         cfg: cfg,
         ch: make(chan string, 10),
@@ -33,10 +33,10 @@ func (d *telegramSink) GetSink() chan<- string {
                 // log.Printf("telegram: %s", msg)
                 params := url.Values{}
                 params.Add("text", msg)
-                params.Add("chat_id", d.cfg["chat_id"])
+                params.Add("chat_id", d.cfg.RawGet("chat_id"))
                 // TODO: add more parameters as defined in https://core.telegram.org/bots/api#sendmessage
                 encoded := params.Encode()
-                url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage?%s", d.cfg["token"], encoded)
+                url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage?%s", d.cfg.RawGet("token"), encoded)
                 req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte{}))
                 if err != nil {
                     panic(err)

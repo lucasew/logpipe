@@ -13,13 +13,13 @@ import (
 
 type journalctlSource struct {
     ch chan string
-    cfg gocfg.Section
+    cfg gocfg.SectionProvider
     started bool
     template *template.Template
 }
 
-func NewJournalctlSource(cfg gocfg.Section) (Source, error) {
-    tmplStr, ok := cfg["format"]
+func NewJournalctlSource(cfg gocfg.SectionProvider) (Source, error) {
+    tmplStr, ok := cfg.RawGet("format"), cfg.RawHasKey("format")
     if !ok {
         tmplStr = "#{{._HOSTNAME}} {{.__REALTIME_TIMESTAMP}} ({{._SYSTEMD_CGROUP}}): {{.MESSAGE}}"
     }
