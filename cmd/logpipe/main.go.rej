@@ -1,0 +1,16 @@
+--- main.go
++++ main.go
+@@ -23,7 +23,12 @@
+     if err != nil {
+         panic(err)
+     }
+-    defer f.Close()
++    defer func() {
++        err := f.Close()
++        if err != nil {
++            panic(err)
++        }
++    }()
+     err = cfg.InjestReader(f)
+     if err != nil {
+         panic(err)

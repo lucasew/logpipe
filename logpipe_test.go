@@ -75,9 +75,9 @@ func TestBroadcast(t *testing.T) {
     tso1 := NewLogPipeTestingSource()
     tsi1 := NewLogPipeTestingSink()
     tsi2 := NewLogPipeTestingSink()
-    source1 = tso1 // Static analysis
-    sink1 = tsi1
-    sink2 = tsi2
+    nop(source1)
+    nop(sink1)
+    nop(sink2)
     lp := NewLogPipe()
     lp.RegisterSource("sample", tso1)
     lp.RegisterSink("out1", tsi1)

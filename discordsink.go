@@ -40,7 +40,9 @@ func NewDiscordSink(cfg gocfg.SectionProvider) (Sink, error) {
 func (d *discordSink) GetSink() chan<- string {
     if !d.started {
         go func() {
-            timer := time.Tick(200*time.Millisecond)
+            timer := time.NewTicker(200 * time.Millisecond)
+            defer timer.Stop()
+            tickerChan := timer.C
             for msg := range d.ch {
                 // log.Printf("discord %s", msg)
                 params := url.Values{}
@@ -51,8 +53,8 @@ func (d *discordSink) GetSink() chan<- string {
                     panic(err)
                 }
                 req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-                <-timer
-                _, err = http.DefaultClient.Do(req)
+                <-tickerChan
+                _, _ = http.DefaultClient.Do(req)
                 // io.Copy(os.Stdout, res.Body)
             }
         }()

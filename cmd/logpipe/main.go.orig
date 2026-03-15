@@ -22,12 +22,10 @@ func init () {
     if err != nil {
         panic(err)
     }
-    defer func() {
-        err := f.Close()
-        if err != nil {
-            panic(err)
-        }
-    }()
+    defer err := f.Close()
+	if err != nil {
+		panic(err)
+	}
     err = cfg.InjestReader(f)
     if err != nil {
         panic(err)

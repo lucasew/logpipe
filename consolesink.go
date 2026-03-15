@@ -21,11 +21,8 @@ func NewConsoleSink(cfg gocfg.SectionProvider) (Sink, error) {
 func (t *ConsoleSink) GetSink() chan <- string {
     if !t.started {
         go func () {
-            for {
-                select {
-                case msg := <-t.ch:
-                    log.Printf("terminal: %s", msg)
-                }
+            for msg := range t.ch {
+                log.Printf("terminal: %s", msg)
             }
         }()
         t.started = true

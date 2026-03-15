@@ -28,7 +28,9 @@ func NewTelegramSink(cfg gocfg.SectionProvider) (Sink, error) {
 func (d *telegramSink) GetSink() chan<- string {
     if !d.started {
         go func() {
-            timer := time.Tick(100*time.Millisecond)
+            timer := time.NewTicker(100 * time.Millisecond)
+            defer timer.Stop()
+            tickerChan := timer.C
             for msg := range d.ch {
                 // log.Printf("telegram: %s", msg)
                 params := url.Values{}
@@ -41,7 +43,7 @@ func (d *telegramSink) GetSink() chan<- string {
                 if err != nil {
                     panic(err)
                 }
-                <-timer
+                <-tickerChan
                 res, err := http.DefaultClient.Do(req)
                 nop(res)
                 // io.Copy(os.Stdout, res.Body)
