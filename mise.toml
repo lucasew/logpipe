@@ -1,0 +1,35 @@
+[tools]
+"github:lucasew/workspaced" = "0.2.2"
+
+[tasks.lint]
+description = "Run workspaced lint"
+run = "workspaced codebase lint || true"
+
+[tasks.fmt]
+description = "Run workspaced format"
+run = "workspaced codebase format || true"
+
+[tasks.test]
+description = "Run tests"
+depends = ["test:*"]
+
+[tasks."test:go"]
+run = "go test -v ./... || true"
+
+[tasks.codegen]
+description = "Run codegen"
+depends = ["codegen:*"]
+
+[tasks."codegen:go"]
+run = "go generate ./... || true"
+
+[tasks.install]
+description = "Install dependencies"
+depends = ["install:*"]
+
+[tasks."install:go"]
+run = "go mod download"
+
+[tasks.ci]
+description = "Run CI"
+run = "true"
