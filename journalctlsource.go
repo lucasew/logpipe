@@ -18,6 +18,11 @@ type journalctlSource struct {
     template *template.Template
 }
 
+// NewJournalctlSource creates a logpipe.Source that tails the systemd journal.
+// It accepts a configuration section that can optionally contain a "format" key
+// specifying a Go text/template string for formatting the journalctl JSON output.
+// If "format" is omitted, it defaults to "#{{._HOSTNAME}} {{.__REALTIME_TIMESTAMP}} ({{._SYSTEMD_CGROUP}}): {{.MESSAGE}}".
+// It spawns a background `journalctl` process that parses JSON lines and panics on critical stream errors.
 func NewJournalctlSource(cfg gocfg.Section) (Source, error) {
     tmplStr, ok := cfg["format"]
     if !ok {
