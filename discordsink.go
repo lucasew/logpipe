@@ -11,7 +11,7 @@ import (
 )
 
 type discordSink struct {
-    cfg gocfg.Section
+    cfg gocfg.SectionProvider
     webhook *url.URL
     ch chan string
     started bool
@@ -21,9 +21,9 @@ var (
     ErrDiscordSinkNoWebhookProvided = errors.New("no webhook was provided")
 )
 
-func NewDiscordSink(cfg gocfg.Section) (Sink, error) {
-    webhook, ok := cfg["webhook"]
-    if !ok {
+func NewDiscordSink(cfg gocfg.SectionProvider) (Sink, error) {
+    webhook := cfg.RawGet("webhook")
+    if !cfg.RawHasKey("webhook") {
         return nil, ErrDiscordSinkNoWebhookProvided
     }
     u, err := url.Parse(webhook)
@@ -48,7 +48,8 @@ func (d *discordSink) GetSink() chan<- string {
                 encoded := params.Encode()
                 req, err := http.NewRequest("POST", d.webhook.String(), bytes.NewBufferString(encoded))
                 if err != nil {
-                    panic(err)
+                    ReportError(err)
+                    continue
                 }
                 req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
                 <-timer

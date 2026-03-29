@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"log"
 	"os/exec"
 	"text/template"
 
@@ -13,14 +12,14 @@ import (
 
 type journalctlSource struct {
     ch chan string
-    cfg gocfg.Section
+    cfg gocfg.SectionProvider
     started bool
     template *template.Template
 }
 
-func NewJournalctlSource(cfg gocfg.Section) (Source, error) {
-    tmplStr, ok := cfg["format"]
-    if !ok {
+func NewJournalctlSource(cfg gocfg.SectionProvider) (Source, error) {
+    tmplStr := cfg.RawGet("format")
+    if !cfg.RawHasKey("format") {
         tmplStr = "#{{._HOSTNAME}} {{.__REALTIME_TIMESTAMP}} ({{._SYSTEMD_CGROUP}}): {{.MESSAGE}}"
     }
     tmpl, err := template.New("msg").Parse(tmplStr)
@@ -40,27 +39,31 @@ func (j *journalctlSource) GetSource() <-chan string {
             cmd := exec.Command("journalctl", "--no-pager", "--output=json", "-f", "--utc")
             stdout, err := cmd.StdoutPipe()
             if err != nil {
-                panic(err)
+                ReportError(err)
+                return
             }
             scanner := bufio.NewScanner(stdout)
             err = cmd.Start()
             if err != nil {
-                panic(err)
+                ReportError(err)
+                return
             }
             for scanner.Scan() {
                 val := map[string]string{}
                 if scanner.Err() != nil {
-                    panic(scanner.Err())
+                    ReportError(scanner.Err())
+                    return
                 }
                 line := scanner.Text()
                 err = json.Unmarshal([]byte(line), &val)
                 if err != nil {
-                    panic(err)
+                    ReportError(err)
+                    continue
                 }
                 buf := bytes.NewBuffer([]byte{})
                 err := j.template.Execute(buf, val)
                 if err != nil {
-                    log.Printf("error(source/journalctl): %s", err.Error())
+                    ReportError(err)
                 }
                 j.ch <- buf.String()
             }

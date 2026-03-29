@@ -20,12 +20,14 @@ func init () {
     flag.Parse()
     f, err := os.Open(CONFIG_FILE)
     if err != nil {
-        panic(err)
+        logpipe.ReportError(err)
+        os.Exit(1)
     }
     defer f.Close()
     err = cfg.InjestReader(f)
     if err != nil {
-        panic(err)
+        logpipe.ReportError(err)
+        os.Exit(1)
     }
     for k, v := range cfg {
         if strings.HasPrefix(k, "source.") {
@@ -34,8 +36,8 @@ func init () {
                 log.Fatalf("invalid source definition in section '%s'", k)
             }
             name := parts[1]
-            sourceType, ok := v["type"]
-            if !ok {
+            sourceType := v.RawGet("type")
+            if !v.RawHasKey("type") {
                 log.Fatalf("no source type was provided in section '%s'", k)
             }
             newSource, ok := logpipe.REGISTERED_SOURCES[sourceType]
@@ -56,8 +58,8 @@ func init () {
                 log.Fatalf("invalid sink definition in section '%s'", k)
             }
             name := parts[1]
-            sourceType, ok := v["type"]
-            if !ok {
+            sourceType := v.RawGet("type")
+            if !v.RawHasKey("type") {
                 log.Fatalf("no source type was provided in section '%s'", k)
             }
             newSink, ok := logpipe.REGISTERED_SINKS[sourceType]
@@ -73,10 +75,12 @@ func init () {
             continue
         }
         if k == "env" {
-            for vark, varv := range v {
-                err := os.Setenv(vark, varv)
-                if err != nil {
-                    panic(err)
+            if mapV, ok := v.(gocfg.MapSectionProvider); ok {
+                for vark, varv := range mapV {
+                    err := os.Setenv(vark, varv)
+                    if err != nil {
+                        logpipe.ReportError(err)
+                    }
                 }
             }
         }

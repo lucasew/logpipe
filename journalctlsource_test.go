@@ -3,11 +3,16 @@ package logpipe
 import (
 	"testing"
 	"time"
+
+	"github.com/lucasew/gocfg"
 )
 
 func TestJournalctlSource(t *testing.T) {
     sink := NewLogPipeTestingSink()
-    source := NewJournalctlSource(map[string]string{})
+    source, err := NewJournalctlSource(gocfg.NewMapSectionProvider())
+    if err != nil {
+        t.Fatal(err)
+    }
     lp := NewLogPipe()
     lp.RegisterSource("journalctl", source)
     lp.RegisterSink("echo", sink)
