@@ -1,0 +1,1 @@
+- 2026-03-29: [Medium] Ignored/swallowed errors or panics in goroutines - use centralized error reporting and fail securely.

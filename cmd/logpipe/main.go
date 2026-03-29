@@ -20,12 +20,14 @@ func init () {
     flag.Parse()
     f, err := os.Open(CONFIG_FILE)
     if err != nil {
-        panic(err)
+        logpipe.ReportError(err)
+        log.Fatalf("failed to open config: %v", err)
     }
     defer f.Close()
     err = cfg.InjestReader(f)
     if err != nil {
-        panic(err)
+        logpipe.ReportError(err)
+        log.Fatalf("failed to injest reader: %v", err)
     }
     for k, v := range cfg {
         if strings.HasPrefix(k, "source.") {
@@ -76,7 +78,8 @@ func init () {
             for vark, varv := range v {
                 err := os.Setenv(vark, varv)
                 if err != nil {
-                    panic(err)
+                    logpipe.ReportError(err)
+                    log.Fatalf("failed to set env var %s: %v", vark, err)
                 }
             }
         }

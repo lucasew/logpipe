@@ -48,11 +48,17 @@ func (d *discordSink) GetSink() chan<- string {
                 encoded := params.Encode()
                 req, err := http.NewRequest("POST", d.webhook.String(), bytes.NewBufferString(encoded))
                 if err != nil {
-                    panic(err)
+                    ReportError(err)
+                    continue
                 }
                 req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
                 <-timer
-                _, err = http.DefaultClient.Do(req)
+                res, err := http.DefaultClient.Do(req)
+                if err != nil {
+                    ReportError(err)
+                    continue
+                }
+                res.Body.Close()
                 // io.Copy(os.Stdout, res.Body)
             }
         }()

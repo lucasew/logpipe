@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"log"
 	"os/exec"
 	"text/template"
 
@@ -40,27 +39,32 @@ func (j *journalctlSource) GetSource() <-chan string {
             cmd := exec.Command("journalctl", "--no-pager", "--output=json", "-f", "--utc")
             stdout, err := cmd.StdoutPipe()
             if err != nil {
-                panic(err)
+                ReportError(err)
+                return
             }
             scanner := bufio.NewScanner(stdout)
             err = cmd.Start()
             if err != nil {
-                panic(err)
+                ReportError(err)
+                return
             }
             for scanner.Scan() {
                 val := map[string]string{}
                 if scanner.Err() != nil {
-                    panic(scanner.Err())
+                    ReportError(scanner.Err())
+                    continue
                 }
                 line := scanner.Text()
                 err = json.Unmarshal([]byte(line), &val)
                 if err != nil {
-                    panic(err)
+                    ReportError(err)
+                    continue
                 }
                 buf := bytes.NewBuffer([]byte{})
                 err := j.template.Execute(buf, val)
                 if err != nil {
-                    log.Printf("error(source/journalctl): %s", err.Error())
+                    ReportError(err)
+                    continue
                 }
                 j.ch <- buf.String()
             }

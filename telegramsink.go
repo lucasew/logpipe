@@ -3,7 +3,6 @@ package logpipe
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -39,15 +38,17 @@ func (d *telegramSink) GetSink() chan<- string {
                 url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage?%s", d.cfg["token"], encoded)
                 req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte{}))
                 if err != nil {
-                    panic(err)
+                    ReportError(err)
+                    continue
                 }
                 <-timer
                 res, err := http.DefaultClient.Do(req)
-                nop(res)
-                // io.Copy(os.Stdout, res.Body)
                 if err != nil {
-                    log.Printf("retry: %s", err.Error())
+                    ReportError(err)
+                    continue
                 }
+                res.Body.Close()
+                // io.Copy(os.Stdout, res.Body)
             }
         }()
         d.started = true
